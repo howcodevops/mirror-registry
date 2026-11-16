@@ -1,7 +1,7 @@
 
 name: Test ArgoCD upstream image access
 
-on:
+"on":
   workflow_dispatch:
 
 permissions:
@@ -37,4 +37,3 @@ jobs:
           Digest: {{.Digest}}
           Architecture: {{.Architecture}}
           OS: {{.Os}}'
-
