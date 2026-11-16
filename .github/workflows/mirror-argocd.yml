@@ -1,1 +1,40 @@
 
+name: Test ArgoCD upstream image access
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-upstream:
+    name: Verify official Quay image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Install Skopeo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+
+      - name: Inspect official ArgoCD image
+        run: |
+          set -euo pipefail
+
+          IMAGE="docker://quay.io/argoproj/argocd:v3.5.6"
+
+          echo "Inspecting official image..."
+          skopeo inspect --raw "$IMAGE" > manifest.json
+
+          echo "Manifest digest:"
+          sha256sum manifest.json
+
+          echo "Available image metadata:"
+          skopeo inspect "$IMAGE" \
+            --format 'Name: {{.Name}}
+          Digest: {{.Digest}}
+          Architecture: {{.Architecture}}
+          OS: {{.Os}}'
+
