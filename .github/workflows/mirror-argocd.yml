@@ -1,39 +1,92 @@
 
-name: Test ArgoCD upstream image access
+name: Mirror ArgoCD to GHCR
 
 "on":
   workflow_dispatch:
 
 permissions:
   contents: read
+  packages: write
+
+env:
+  SOURCE_IMAGE: quay.io/argoproj/argocd:v3.5.6
+  TARGET_IMAGE: ghcr.io/howcodevops/argocd:v3.5.6
 
 jobs:
-  test-upstream:
-    name: Verify official Quay image
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+  mirror:
+    name: Copy and verify ArgoCD image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
 
     steps:
       - name: Install Skopeo
         run: |
+          set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y skopeo
 
-      - name: Inspect official ArgoCD image
+      - name: Capture upstream manifest
+        run: |
+          set -euo pipefail
+          skopeo inspect --raw "docker://${SOURCE_IMAGE}" \
+            > "$RUNNER_TEMP/source-manifest.json"
+
+          echo "Upstream manifest digest:"
+          sha256sum "$RUNNER_TEMP/source-manifest.json"
+
+      - name: Authenticate to GHCR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
-          IMAGE="docker://quay.io/argoproj/argocd:v3.5.6"
+          AUTH_FILE="$RUNNER_TEMP/ghcr-auth.json"
+          chmod 600 "$AUTH_FILE" 2>/dev/null || true
 
-          echo "Inspecting official image..."
-          skopeo inspect --raw "$IMAGE" > manifest.json
+          printf '%s' "$GH_TOKEN" |
+            skopeo login ghcr.io \
+              --username "$GITHUB_ACTOR" \
+              --password-stdin \
+              --authfile "$AUTH_FILE"
 
-          echo "Manifest digest:"
-          sha256sum manifest.json
+          echo "GHCR authentication succeeded."
 
-          echo "Available image metadata:"
-          skopeo inspect "$IMAGE" \
-            --format 'Name: {{.Name}}
-          Digest: {{.Digest}}
-          Architecture: {{.Architecture}}
-          OS: {{.Os}}'
+      - name: Copy all architectures to GHCR
+        run: |
+          set -euo pipefail
+
+          skopeo copy \
+            --all \
+            --preserve-digests \
+            --retry-times 3 \
+            --dest-authfile "$RUNNER_TEMP/ghcr-auth.json" \
+            "docker://${SOURCE_IMAGE}" \
+            "docker://${TARGET_IMAGE}"
+
+      - name: Verify destination manifest
+        run: |
+          set -euo pipefail
+
+          skopeo inspect --raw \
+            --authfile "$RUNNER_TEMP/ghcr-auth.json" \
+            "docker://${TARGET_IMAGE}" \
+            > "$RUNNER_TEMP/destination-manifest.json"
+
+          echo "Comparing upstream and destination manifests..."
+
+          if ! cmp -s \
+            "$RUNNER_TEMP/source-manifest.json" \
+            "$RUNNER_TEMP/destination-manifest.json"; then
+            echo "::error::Source and destination manifests differ."
+            exit 1
+          fi
+
+          echo "Verified manifest digest:"
+          sha256sum "$RUNNER_TEMP/destination-manifest.json"
+
+          echo "Image mirror verification PASSED."
+
+      - name: Remove temporary authentication file
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/ghcr-auth.json"
