@@ -40,6 +40,10 @@ jobs:
             source: rancher/mirrored-library-traefik:2.11.8
             target: ghcr.io/howcodevops/mirrored-library-traefik:2.11.8
 
+          - name: mirrored-library-busybox
+            source: rancher/mirrored-library-busybox:1.36.1
+            target: ghcr.io/howcodevops/mirrored-library-busybox:1.36.1
+
     env:
       SOURCE_IMAGE: ${{ matrix.source }}
       TARGET_IMAGE: ${{ matrix.target }}
