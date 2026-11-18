@@ -44,6 +44,10 @@ jobs:
             source: rancher/mirrored-library-busybox:1.36.1
             target: ghcr.io/howcodevops/mirrored-library-busybox:1.36.1
 
+          - name: busybox
+            source: docker.io/library/busybox:1.38.0
+            target: ghcr.io/howcodevops/busybox:1.38.0
+
     env:
       SOURCE_IMAGE: ${{ matrix.source }}
       TARGET_IMAGE: ${{ matrix.target }}
