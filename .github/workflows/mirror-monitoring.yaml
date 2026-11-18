@@ -1,0 +1,91 @@
+name: Mirror kube-state-metrics to GHCR
+
+"on":
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  SOURCE_IMAGE: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0
+  TARGET_IMAGE: ghcr.io/howcodevops/kube-state-metrics:v2.20.0
+
+jobs:
+  mirror:
+    name: Copy and verify kube-state-metrics image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Install Skopeo
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+
+      - name: Capture upstream manifest
+        run: |
+          set -euo pipefail
+          skopeo inspect --raw "docker://${SOURCE_IMAGE}" \
+            > "$RUNNER_TEMP/source-manifest.json"
+
+          echo "Upstream manifest digest:"
+          sha256sum "$RUNNER_TEMP/source-manifest.json"
+
+      - name: Authenticate to GHCR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          AUTH_FILE="$RUNNER_TEMP/ghcr-auth.json"
+          chmod 600 "$AUTH_FILE" 2>/dev/null || true
+
+          printf '%s' "$GH_TOKEN" |
+            skopeo login ghcr.io \
+              --username "$GITHUB_ACTOR" \
+              --password-stdin \
+              --authfile "$AUTH_FILE"
+
+          echo "GHCR authentication succeeded."
+
+      - name: Copy all architectures to GHCR
+        run: |
+          set -euo pipefail
+
+          skopeo copy \
+            --all \
+            --preserve-digests \
+            --retry-times 3 \
+            --dest-authfile "$RUNNER_TEMP/ghcr-auth.json" \
+            "docker://${SOURCE_IMAGE}" \
+            "docker://${TARGET_IMAGE}"
+
+      - name: Verify destination manifest
+        run: |
+          set -euo pipefail
+
+          skopeo inspect --raw \
+            --authfile "$RUNNER_TEMP/ghcr-auth.json" \
+            "docker://${TARGET_IMAGE}" \
+            > "$RUNNER_TEMP/destination-manifest.json"
+
+          echo "Comparing upstream and destination manifests..."
+
+          if ! cmp -s \
+            "$RUNNER_TEMP/source-manifest.json" \
+            "$RUNNER_TEMP/destination-manifest.json"; then
+            echo "::error::Source and destination manifests differ."
+            exit 1
+          fi
+
+          echo "Verified manifest digest:"
+          sha256sum "$RUNNER_TEMP/destination-manifest.json"
+
+          echo "Image mirror verification PASSED."
+
+      - name: Remove temporary authentication file
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/ghcr-auth.json"
