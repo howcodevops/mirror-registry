@@ -32,6 +32,14 @@ jobs:
             source: rancher/mirrored-metrics-server:v0.7.2
             target: ghcr.io/howcodevops/mirrored-metrics-server:v0.7.2
 
+          - name: klipper-lb
+            source: rancher/klipper-lb:v0.4.9
+            target: ghcr.io/howcodevops/klipper-lb:v0.4.9
+
+          - name: traefik
+            source: rancher/mirrored-library-traefik:2.11.8
+            target: ghcr.io/howcodevops/mirrored-library-traefik:2.11.8
+
     env:
       SOURCE_IMAGE: ${{ matrix.source }}
       TARGET_IMAGE: ${{ matrix.target }}
