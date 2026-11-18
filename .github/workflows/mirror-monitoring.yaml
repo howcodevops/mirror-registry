@@ -1,4 +1,4 @@
-name: Mirror kube-state-metrics to GHCR
+name: Mirror Monitoring Images to GHCR
 
 "on":
   workflow_dispatch:
@@ -7,15 +7,51 @@ permissions:
   contents: read
   packages: write
 
-env:
-  SOURCE_IMAGE: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0
-  TARGET_IMAGE: ghcr.io/howcodevops/kube-state-metrics:v2.20.0
-
 jobs:
   mirror:
-    name: Copy and verify kube-state-metrics image
+    name: Copy and verify ${{ matrix.name }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: kube-state-metrics
+            source: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0
+            target: ghcr.io/howcodevops/kube-state-metrics:v2.20.0
+
+          # ── append new images below this line ────────────────────────
+          # - name: busybox
+          #   source: docker.io/library/busybox:1.38.0
+          #   target: ghcr.io/howcodevops/busybox:1.38.0
+          #
+          - name: grafana
+            source: docker.io/grafana/grafana:13.2.4-distroless
+            target: ghcr.io/howcodevops/grafana:13.2.4-distroless
+          #
+          # - name: prometheus
+          #   source: quay.io/prometheus/prometheus:v3.8.1
+          #   target: ghcr.io/howcodevops/prometheus:v3.8.1
+          #
+          # - name: alertmanager
+          #   source: quay.io/prometheus/alertmanager:v0.29.0
+          #   target: ghcr.io/howcodevops/alertmanager:v0.29.0
+          #
+          # - name: prometheus-operator
+          #   source: quay.io/prometheus-operator/prometheus-operator:v0.90.1
+          #   target: ghcr.io/howcodevops/prometheus-operator:v0.90.1
+          #
+          # - name: prometheus-config-reloader
+          #   source: quay.io/prometheus-operator/prometheus-config-reloader:v0.90.1
+          #   target: ghcr.io/howcodevops/prometheus-config-reloader:v0.90.1
+          #
+          # - name: k8s-sidecar
+          #   source: quay.io/kiwigrid/k8s-sidecar:1.28.4
+          #   target: ghcr.io/howcodevops/k8s-sidecar:1.28.4
+
+    env:
+      SOURCE_IMAGE: ${{ matrix.source }}
+      TARGET_IMAGE: ${{ matrix.target }}
 
     steps:
       - name: Install Skopeo
