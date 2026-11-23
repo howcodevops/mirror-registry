@@ -23,20 +23,20 @@ jobs:
             target: ghcr.io/howcodevops/akeyless-gateway:5.4.0
 
           - name: csi-secrets-store-driver
-            source: registry.k8s.io/csi-secrets-store/driver:1.6.2
-            target: ghcr.io/howcodevops/csi-secrets-store-driver:1.6.2
+            source: registry.k8s.io/csi-secrets-store/driver:v1.6.2
+            target: ghcr.io/howcodevops/csi-secrets-store-driver:v1.6.2
 
           - name: csi-secrets-store-driver-crds
-            source: registry.k8s.io/csi-secrets-store/driver-crds:1.6.2
-            target: ghcr.io/howcodevops/csi-secrets-store-driver-crds:1.6.2
+            source: registry.k8s.io/csi-secrets-store/driver-crds:v1.6.2
+            target: ghcr.io/howcodevops/csi-secrets-store-driver-crds:v1.6.2
 
           - name: sig-storage-csi-node-driver-registrar
-            source: registry.k8s.io/sig-storage/csi-node-driver-registrar:2.16.0
-            target: ghcr.io/howcodevops/sig-storage-csi-node-driver-registrar:2.16.0
+            source: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
+            target: ghcr.io/howcodevops/sig-storage-csi-node-driver-registrar:v2.16.0
 
           - name: sig-storage-livenessprobe
-            source: registry.k8s.io/sig-storage/livenessprobe:2.18.0
-            target: ghcr.io/howcodevops/sig-storage-livenessprobe:2.18.0
+            source: registry.k8s.io/sig-storage/livenessprobe:v2.18.0
+            target: ghcr.io/howcodevops/sig-storage-livenessprobe:v2.18.0
 
     env:
       SOURCE_IMAGE: ${{ matrix.source }}
