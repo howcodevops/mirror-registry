@@ -53,7 +53,7 @@ jobs:
             target: ghcr.io/howcodevops/nginx:latest
             
           - name: alpine
-            source: registry-1.docker.io/v2/library/alpine/manifests/latest
+            source: docker.io/library/alpine:latest
             target: ghcr.io/howcodevops/alpine:latest
             
     env:
