@@ -47,7 +47,10 @@ jobs:
           - name: busybox
             source: docker.io/library/busybox:1.38.0
             target: ghcr.io/howcodevops/busybox:1.38.0
-
+            
+          - name: nginx
+            source: docker.io/library/nginx:latest
+            target: ghcr.io/howcodevops/nginx:latest
     env:
       SOURCE_IMAGE: ${{ matrix.source }}
       TARGET_IMAGE: ${{ matrix.target }}
