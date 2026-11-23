@@ -8,15 +8,39 @@ permissions:
   contents: read
   packages: write
 
-env:
-  SOURCE_IMAGE: docker.io/akeyless/gateway:5.4.0
-  TARGET_IMAGE: ghcr.io/howcodevops/akeyless-gateway:5.4.0
-
 jobs:
   mirror:
-    name: Copy and verify Akeyless Gateway image
+    name: Copy and verify ${{ matrix.name }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        
+          - name: akeyless-gateway
+            source: docker.io/akeyless/gateway:5.4.0
+            target: ghcr.io/howcodevops/akeyless-gateway:5.4.0
+
+          - name: csi-secrets-store-driver
+            source: registry.k8s.io/csi-secrets-store/driver:1.6.2
+            target: ghcr.io/howcodevops/csi-secrets-store-driver:1.6.2
+
+          - name: csi-secrets-store-driver-crds
+            source: registry.k8s.io/csi-secrets-store/driver-crds:1.6.2
+            target: ghcr.io/howcodevops/csi-secrets-store-driver-crds:1.6.2
+
+          - name: sig-storage-csi-node-driver-registrar
+            source: registry.k8s.io/sig-storage/csi-node-driver-registrar:2.16.0
+            target: ghcr.io/howcodevops/sig-storage-csi-node-driver-registrar:2.16.0
+
+          - name: sig-storage-livenessprobe
+            source: registry.k8s.io/sig-storage/livenessprobe:2.18.0
+            target: ghcr.io/howcodevops/sig-storage-livenessprobe:2.18.0
+
+    env:
+      SOURCE_IMAGE: ${{ matrix.source }}
+      TARGET_IMAGE: ${{ matrix.target }}
 
     steps:
       - name: Install Skopeo
@@ -40,9 +64,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          umask 077
 
           AUTH_FILE="$RUNNER_TEMP/ghcr-auth.json"
+          umask 077
 
           printf '%s' "$GH_TOKEN" |
             skopeo login ghcr.io \
@@ -85,7 +109,7 @@ jobs:
           echo "Verified manifest digest:"
           sha256sum "$RUNNER_TEMP/destination-manifest.json"
 
-          echo "Akeyless Gateway image mirror verification PASSED."
+          echo "Image mirror verification PASSED."
 
       - name: Remove temporary authentication file
         if: always()
