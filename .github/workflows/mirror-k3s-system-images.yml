@@ -51,6 +51,11 @@ jobs:
           - name: nginx
             source: docker.io/library/nginx:latest
             target: ghcr.io/howcodevops/nginx:latest
+            
+          - name: alpine
+            source: registry-1.docker.io/v2/library/alpine/manifests/latest
+            target: ghcr.io/howcodevops/alpine:latest
+            
     env:
       SOURCE_IMAGE: ${{ matrix.source }}
       TARGET_IMAGE: ${{ matrix.target }}
