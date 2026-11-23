@@ -22,6 +22,10 @@ jobs:
             source: docker.io/akeyless/gateway:5.4.0
             target: ghcr.io/howcodevops/akeyless-gateway:5.4.0
 
+          - name: akeyless-csi-provider
+            source: docker.io/akeyless/akeyless-csi-provider:latest
+            target: ghcr.io/howcodevops/akeyless-csi-provider:latest
+
           - name: csi-secrets-store-driver
             source: registry.k8s.io/csi-secrets-store/driver:v1.6.2
             target: ghcr.io/howcodevops/csi-secrets-store-driver:v1.6.2
